@@ -25,7 +25,7 @@ public class InputManager : MonoBehaviour
             //Debug.Log(mousePos);
 
             Ray ray = mainCam.ScreenPointToRay(Input.mousePosition);
-            if(Physics.Raycast(ray, out RaycastHit hit))
+            if(Physics.Raycast(ray, out RaycastHit hit, 200.0f, LayerMask.GetMask("Ground")))
             {
                 unitManager.MovePosition(hit.point);
             }

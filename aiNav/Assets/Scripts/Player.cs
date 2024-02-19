@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.AI.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -15,6 +16,16 @@ public class Player : MonoBehaviour
     float waitingTime;//도착후에 잠깐 기다리는 시간
     [SerializeField] Vector2 vecWaitingMinMax;
 
+    [Header("점프데이터")]
+    OffMeshLinkData linkData;
+    [SerializeField] float JumpSpeed = 0.0f;
+    float JumpRatio = 0.0f;
+    float JumpMaxHeight = 0.0f;
+    [SerializeField] float JumpHeight = 5f;
+    bool setOffMesh = false;
+    Vector3 offMeshStart;
+    Vector3 offMeshEnd;
+
 
     // Start is called before the first frame update
     void Awake()
@@ -25,6 +36,10 @@ public class Player : MonoBehaviour
         {
             startPosition = hit.position;
         }
+
+        //NavMesh.RemoveAllNavMeshData();
+        //NavMeshSurface surface = GetComponent<NavMeshSurface>();
+        //surface.BuildNavMesh();
     }
 
 
@@ -52,37 +67,74 @@ public class Player : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if(isArrive() == true)//새로운 이동 위치를 잡아줌
-        {
-            if (checkWaitTime() == true) return;
+        //if(isArrive() == true)//새로운 이동 위치를 잡아줌
+        //{
+        //    if (checkWaitTime() == true) return;
 
-            setNewPath();
+        //    setNewPath();
+        //}
+
+        if(agent.isOnOffMeshLink == true)
+        {
+            doOffMesh();
+        }
+    }
+
+    private void doOffMesh()
+    {
+        if(setOffMesh == false)//점프하기전 설정
+        {
+            setOffMesh = true;
+            linkData = agent.currentOffMeshLinkData;
+
+            offMeshStart = transform.position;
+            offMeshEnd = linkData.endPos + new Vector3(0,agent.height * 0.5f, 0);
+
+            agent.isStopped = true;//에이전트 멈춤
+            JumpSpeed = Vector3.Distance(offMeshStart, offMeshEnd)/agent.speed;
+            //float distance = (offMeshStart - offMeshEnd).magnitude;
+            JumpMaxHeight = (offMeshEnd - offMeshStart).y + JumpHeight;
+
+        }
+
+        JumpRatio += (Time.deltaTime / JumpSpeed);
+
+        Vector3 movePos = Vector3.Lerp(offMeshStart, offMeshEnd, JumpRatio);
+        movePos.y = offMeshStart.y + JumpMaxHeight * JumpRatio + -JumpHeight * Mathf.Pow(JumpRatio, 2);
+        transform.position = movePos;
+
+        if(JumpRatio >= 1.0f)//도착한것
+        {
+            JumpRatio = 0.0f;
+            agent.CompleteOffMeshLink();
+            agent.isStopped = false;
+            setOffMesh = false;
         }
     }
 
     /// <summary>
     /// true가 된다면 기달,false가 된다면 이동
     /// </summary>
-    private void setNewWaitTime()
-    {
-        waitingTime = Random.Range(vecWaitingMinMax.x, vecWaitingMinMax.y);
-    }
+    //private void setNewWaitTime()
+    //{
+    //    waitingTime = Random.Range(vecWaitingMinMax.x, vecWaitingMinMax.y);
+    //}
 
-    private bool checkWaitTime()
-    {
-        if (waitingTime >= 0.0f)//기다려야 하는 시간이 0.0이 아니라면
-        {
-            waitingTime -= Time.deltaTime;//시간을 감소시킨다
-            if (waitingTime < 0.0f)//만약 감소시킨 시간 0.0 이하가된다면
-            {
-                setNewWaitTime();//새 기다리는 시간을 정의
-                return false;//이동하라고 전달
-            }
+    //private bool checkWaitTime()
+    //{
+    //    if (waitingTime >= 0.0f)//기다려야 하는 시간이 0.0이 아니라면
+    //    {
+    //        waitingTime -= Time.deltaTime;//시간을 감소시킨다
+    //        if (waitingTime < 0.0f)//만약 감소시킨 시간 0.0 이하가된다면
+    //        {
+    //            setNewWaitTime();//새 기다리는 시간을 정의
+    //            return false;//이동하라고 전달
+    //        }
 
-            return true;
-        }
-        return false;
-    }
+    //        return true;
+    //    }
+    //    return false;
+    //}
 
     private void setNewPath()
     {
