@@ -26,7 +26,7 @@ public class UnitManager : MonoBehaviour
     {
         //if (listPlayer.Exists((x) => x == _unit) == false)
         //{
-            listPlayer.Add(_unit);
+        listPlayer.Add(_unit);
         //}
 
     }
@@ -39,10 +39,14 @@ public class UnitManager : MonoBehaviour
     public void MovePosition(Vector3 pos)
     {
         int count = listPlayer.Count;
-        for(int iNum = 0; iNum < count; ++iNum)
+        for (int iNum = 0; iNum < count; ++iNum)
         {
             Player unit = listPlayer[iNum];
-            unit.SetDestination(pos);
+            if (unit.Select == true)
+            {
+                unit.SetDestination(pos);
+
+            }
         }
 
         //È¤Àº
@@ -52,4 +56,26 @@ public class UnitManager : MonoBehaviour
         //}
     }
 
+    public void ClearAllSelectUnit()
+    {
+        int count = listPlayer.Count;
+        for (int iNum = 0; iNum < count; ++iNum)
+        {
+            Player sc = listPlayer[iNum];
+            sc.Select = false;
+        }
+    }
+
+    public void SelectUnit(Rect _rect)
+    {
+        int count = listPlayer.Count;
+        for (int iNum = 0; iNum < count; ++iNum)
+        {
+            Player unit = listPlayer[iNum];
+            if (_rect.Contains(Camera.main.WorldToScreenPoint(unit.transform.position)) == true)
+            {
+                unit.Select = true;
+            }
+        }
+    }
 }

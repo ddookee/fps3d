@@ -26,6 +26,33 @@ public class Player : MonoBehaviour
     Vector3 offMeshStart;
     Vector3 offMeshEnd;
 
+    Material matUnit;//클릭되었는지 확잉용 메테리얼
+
+    private bool select = false;
+    public bool Select
+    {
+        set
+        {
+            select = value;
+            if (matUnit != null)
+            {
+                if (select == true)
+                {
+                    matUnit.color = Color.green;
+
+                }
+                else
+                {
+                    matUnit.color = Color.white;
+                }
+            }
+        }
+        get
+        {
+            return select;
+        }
+    }
+
 
     // Start is called before the first frame update
     void Awake()
@@ -40,6 +67,10 @@ public class Player : MonoBehaviour
         //NavMesh.RemoveAllNavMeshData();
         //NavMeshSurface surface = GetComponent<NavMeshSurface>();
         //surface.BuildNavMesh();
+
+        MeshRenderer mr = GetComponent<MeshRenderer>();
+        matUnit = Instantiate(mr.material);
+        mr.material = matUnit;
     }
 
 
@@ -49,10 +80,10 @@ public class Player : MonoBehaviour
         //UnitManager.Instance.RemoveUnit(this);
 
         //2.어떤조건에 의해서 데이터가 삭제되어야 할때 (ex 에디터에서 플레이가 끝났을떄)
-        if(UnitManager.Instance != null)
+        if (UnitManager.Instance != null)
         {
             UnitManager.Instance.RemoveUnit(this);
-        } 
+        }
     }
 
     private void Start()
@@ -74,7 +105,7 @@ public class Player : MonoBehaviour
         //    setNewPath();
         //}
 
-        if(agent.isOnOffMeshLink == true)
+        if (agent.isOnOffMeshLink == true)
         {
             doOffMesh();
         }
@@ -82,16 +113,16 @@ public class Player : MonoBehaviour
 
     private void doOffMesh()
     {
-        if(setOffMesh == false)//점프하기전 설정
+        if (setOffMesh == false)//점프하기전 설정
         {
             setOffMesh = true;
             linkData = agent.currentOffMeshLinkData;
 
             offMeshStart = transform.position;
-            offMeshEnd = linkData.endPos + new Vector3(0,agent.height * 0.5f, 0);
+            offMeshEnd = linkData.endPos + new Vector3(0, agent.height * 0.5f, 0);
 
             agent.isStopped = true;//에이전트 멈춤
-            JumpSpeed = Vector3.Distance(offMeshStart, offMeshEnd)/agent.speed;
+            JumpSpeed = Vector3.Distance(offMeshStart, offMeshEnd) / agent.speed;
             //float distance = (offMeshStart - offMeshEnd).magnitude;
             JumpMaxHeight = (offMeshEnd - offMeshStart).y + JumpHeight;
 
@@ -103,7 +134,7 @@ public class Player : MonoBehaviour
         movePos.y = offMeshStart.y + JumpMaxHeight * JumpRatio + -JumpHeight * Mathf.Pow(JumpRatio, 2);
         transform.position = movePos;
 
-        if(JumpRatio >= 1.0f)//도착한것
+        if (JumpRatio >= 1.0f)//도착한것
         {
             JumpRatio = 0.0f;
             agent.CompleteOffMeshLink();
@@ -150,7 +181,7 @@ public class Player : MonoBehaviour
     /// <returns></returns>
     private bool isArrive()
     {
-        if(agent.velocity == Vector3.zero)//가만히 있는 상태, 이동불가능한 상황에 닥쳐서 멈춰있음
+        if (agent.velocity == Vector3.zero)//가만히 있는 상태, 이동불가능한 상황에 닥쳐서 멈춰있음
         {
             return true;
         }
@@ -158,7 +189,7 @@ public class Player : MonoBehaviour
         //{
         //    return true;
         //}
-        
+
         return false;
     }
 
@@ -171,7 +202,7 @@ public class Player : MonoBehaviour
     {
         Vector3 randomPoint = transform.position + Random.insideUnitSphere * randomRadiusRange;
 
-        if(NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, randomRadiusRange, NavMesh.AllAreas))
+        if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, randomRadiusRange, NavMesh.AllAreas))
         {
             return hit.position;
         }
