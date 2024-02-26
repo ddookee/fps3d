@@ -11,7 +11,7 @@ public class InputController : MonoBehaviour
     [SerializeField] Transform trsLookAt;
     [SerializeField, Range(0.1f, 1f)] float lookAyWeight;
 
-    List<string>listDanceStateName = new List<string>();
+    List<string> listDanceStateName = new List<string>();
 
     [SerializeField] GameObject objIven;
     [SerializeField] GameObject objButton;
@@ -20,10 +20,13 @@ public class InputController : MonoBehaviour
 
     [SerializeField, Range(0.0f, 1.0f)] float distanceToGround;
 
+    bool doChangeState = false;
+    float MouseVertical = 0f;
+
 
     private void OnAnimatorIK(int layerIndex)
     {
-        if(trsLookAt != null)
+        if (trsLookAt != null)
         {
             anim.SetLookAtWeight(lookAyWeight);
             anim.SetLookAtPosition(trsLookAt.position);
@@ -36,8 +39,8 @@ public class InputController : MonoBehaviour
         anim.SetIKRotationWeight(AvatarIKGoal.RightFoot, 1);
 
 
-        if (Physics.Raycast(anim.GetIKPosition(AvatarIKGoal.LeftFoot) + Vector3.up, 
-            Vector3.down, 
+        if (Physics.Raycast(anim.GetIKPosition(AvatarIKGoal.LeftFoot) + Vector3.up,
+            Vector3.down,
             out RaycastHit lefthit,
             distanceToGround + 1f, LayerMask.GetMask("Ground")))
         {
@@ -46,13 +49,13 @@ public class InputController : MonoBehaviour
 
             anim.SetIKPosition(AvatarIKGoal.LeftFoot, footPos);
 
-            anim.SetIKRotation(AvatarIKGoal.LeftFoot, 
+            anim.SetIKRotation(AvatarIKGoal.LeftFoot,
                 Quaternion.LookRotation(Vector3.ProjectOnPlane(transform.forward, lefthit.normal),
                 lefthit.normal));
         }
 
-        if (Physics.Raycast(anim.GetIKPosition(AvatarIKGoal.RightFoot) + Vector3.up, 
-            Vector3.down, 
+        if (Physics.Raycast(anim.GetIKPosition(AvatarIKGoal.RightFoot) + Vector3.up,
+            Vector3.down,
             out RaycastHit righthit,
             distanceToGround + 1f, LayerMask.GetMask("Ground")))
         {
@@ -91,6 +94,7 @@ public class InputController : MonoBehaviour
         moving();
         doDance();
         activeDanceIventory();
+        checkAim();
     }
 
     private void moving()
@@ -107,7 +111,7 @@ public class InputController : MonoBehaviour
 
     private void activeDanceIventory()
     {
-        if(Input.GetKeyDown(KeyCode.I))
+        if (Input.GetKeyDown(KeyCode.I))
         {
             bool isActive = objIven.activeSelf;
             objIven.gameObject.SetActive(isActive);
@@ -118,10 +122,10 @@ public class InputController : MonoBehaviour
     {
         AnimationClip[] clips = anim.runtimeAnimatorController.animationClips;
         int count = clips.Length;
-        for(int iNum = 0; iNum < count; ++iNum)
+        for (int iNum = 0; iNum < count; ++iNum)
         {
             string animName = clips[iNum].name;
-            if(animName.Contains("Dance_"))//Contains : 포함하는지
+            if (animName.Contains("Dance_"))//Contains : 포함하는지
             {
                 listDanceStateName.Add(animName);
             }
@@ -132,7 +136,7 @@ public class InputController : MonoBehaviour
     {
         Transform parent = objIven.transform;
         int count = listDanceStateName.Count;
-        for(int iNum = 0;iNum < count; ++iNum)
+        for (int iNum = 0; iNum < count; ++iNum)
         {
             int Number = iNum;
 
@@ -151,10 +155,10 @@ public class InputController : MonoBehaviour
             });
         }
     }
-    
+
     private void doDance()
     {
-        
+
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             //anim.Play("Dance1");
@@ -173,9 +177,68 @@ public class InputController : MonoBehaviour
             anim.CrossFade("Dance_3", 0.2f);
         }
 
-        if(Input.GetAxis("Vertical") != 0.0 || Input.GetAxis("Horizontal") != 0.0f)
+        if (Input.GetAxis("Vertical") != 0.0 || Input.GetAxis("Horizontal") != 0.0f)
         {
             anim.Play("move");
         }
+    }
+
+    private void checkAim()
+    {
+        if (Input.GetKeyDown(KeyCode.LeftControl) && doChangeState == false)
+        {
+            if (Cursor.lockState == CursorLockMode.None)
+            {
+                Cursor.lockState = CursorLockMode.Locked;//커서가 보이지 않아야 함
+                //레이ㅓ 웨잇을 1로
+                StartCoroutine(changeState(true));
+            }
+            else
+            {
+                Cursor.lockState = CursorLockMode.None;
+                //레이어 웨잇을 0으로
+                StartCoroutine(changeState(false));
+            }
+        }
+
+        if(Cursor.lockState == CursorLockMode.Locked)
+        {
+            MouseVertical += Input.GetAxis("Mouse Y")* Time.deltaTime;
+            MouseVertical = Mathf.Clamp(MouseVertical, -1f, 1f);
+            anim.SetFloat("MouseVertical", MouseVertical);
+
+            if(Input.GetMouseButtonDown(0))
+            {
+                //anim.Play("원하는 애니메이션 이름");
+            }
+        }
+    }
+
+    IEnumerator changeState(bool _upper)
+    {
+        float ratio = 0;
+        doChangeState = true;
+
+        if (_upper)
+        {
+            while (anim.GetLayerWeight(1) < 1.0f)
+            {
+                ratio += Time.deltaTime * 5f;
+                anim.SetLayerWeight(1, Mathf.Lerp(0f,1f,ratio));
+
+                yield return null;//new = 동적할당
+            }
+        }
+        else
+        {
+            while(anim.GetLayerWeight(1) >  0f)
+            {
+                ratio += Time.deltaTime * 5f;
+                anim.SetLayerWeight(1,Mathf.Lerp(1f,0f,ratio));
+                yield return null;
+            }
+        }
+
+        doChangeState = false;
     }
 }
