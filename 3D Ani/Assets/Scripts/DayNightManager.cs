@@ -65,22 +65,27 @@ public class DayNightManager : MonoBehaviour
         if (AutoChange == true)
         {
             timeOfDay += Time.deltaTime;//시간이 자동으로 증가
+
+            if(timeOfDay > dayTime)
+            {
+                isNight = true;
+            }
+            else if(timeOfDay < nightTime)
+            {
+                isNight = false;
+            }
+
+            
         }
         else//시간을 직접 관리
         {
             if (isNight == true)
             {
                 timeOfDay += Time.deltaTime;
-                if (timeOfDay > dayTime)
+                if (timeOfDay > nightTime)
                 {
-                    isNight = true;//밤
+                    timeOfDay = nightTime;//밤
                 }
-                else if (timeOfDay > nightTime)
-                {
-                    isNight = false;
-                }
-
-                if (timeOfDay > 23) { }//모름 수정수정수정
             }
             else
             {
@@ -92,6 +97,12 @@ public class DayNightManager : MonoBehaviour
             }
 
         }
+
+        if (timeOfDay > 23.1)
+        {
+            timeOfDay = 4;
+        }
+
         updateLighting();
     }
 
